@@ -126,12 +126,6 @@ MIT
 
 Issues and Pull Requests are welcome.
 
-## Related Skills
-
-- `code-review-single` — Single repository Code Review
-- `code-diff-pulse` — Code change point analysis
-- `code-analyze-arch` — Architecture deconstruction analysis
-
 ---
 
 
@@ -263,9 +257,3 @@ MIT
 ## 贡献
 
 欢迎提交 Issue 和 Pull Request。
-
-## 相关技能
-
-- `code-review-single` — 单仓库 Code Review
-- `code-diff-pulse` — 代码改动点分析
-- `code-analyze-arch` — 架构解构分析
