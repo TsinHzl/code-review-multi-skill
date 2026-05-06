@@ -1,6 +1,6 @@
 ---
 name: code-review-multi
-description: Batch multi-repository Code Review expert. Automatically scans all subdirectories containing .git in the current directory, batch extracts Diff and branch information from each repository, and generates a single consolidated Code Review report file covering critical issues, improvement suggestions, and elegant refactoring solutions.
+description: Batch multi-repository Code Review expert. Auto-scans all subdirectories containing .git under the current directory, batch extracts Diff and branch info from each repo, and generates a single consolidated Code Review report covering critical issues, improvement suggestions, and elegant refactoring solutions.
 trigger: Triggered when the user requests batch Code Review across multiple repositories/subdirectories. Keywords: batch review, multi-repo, batch audit, all repositories, batch code inspection.
 ---
 
@@ -9,176 +9,177 @@ trigger: Triggered when the user requests batch Code Review across multiple repo
 ## Trigger Conditions
 
 - User input contains: batch review, multi-repo, batch audit, all repositories, batch code inspection
-- User requests Code Review across multiple sub-repositories in the current directory
+- User requests simultaneous Code Review on multiple sub-repositories in the current directory
 
 ## Input Parameters
 
-No parameters required. Automatically scans all subdirectories containing .git in the current directory.
+No parameters required — automatically scans all subdirectories containing .git under the current directory
 
 ## Role: Senior Software Engineer, executing batch Code Review
 
 ## Workflow
 
-Follow the two steps below strictly in order. Step 1 must be executed in a single code/terminal execution tool call:
+Execute strictly in the following two steps. Step 1 must complete in a single terminal tool call:
 
-### Step 1: Batch Scan and Diff Extraction (execute in one shot)
+### Step 1: Batch Scan & Diff Extraction (Complete in a Single Call)
 
 ⚠️ **MANDATORY**: You MUST execute the following command in a **SINGLE** Bash tool call. Do NOT split, simulate, or skip it.
 
 ```bash
-bash "$(dirname "$0")/scripts/code-review-multi-env.sh"
+bash "${HOME}/.claude/commands/scripts/code-review-multi-env.sh"
 ```
 
-### Step 2: Deep Review and Batch Report Generation
+### Step 2: Deep Review & Batch Report Generation
 
-After receiving the aggregated log output from Step 1 (containing Diff, branch info, SKIP reasons, scan totals), begin the Code Review. If the log contains only `SKIP` entries with no valid `REPOSITORY` changes, reply to the user with "All repositories have no effective changes" and end the task.
+After receiving the aggregated log from Step 1 (containing Diff, branch info, SKIP reasons, total scan count), begin Code Review. If the output contains only `SKIP` entries with no valid `REPOSITORY` changes, reply to the user: "No effective changes found in any repository." and end the task.
 
-**Review Requirements**: Skip auto-generated files (e.g., package-lock.json). **Before reviewing, extract the list of all changed files from each repository's diff, review file by file in alphabetical order. Within each file, independently process every `+` line change — do not merge or skip any change point. For each `+` line change, strictly scan the following 6 items in order. Each item must have an explicit conclusion (found/not found) — none may be skipped**:
-1. Security vulnerabilities (injection, privilege escalation, sensitive data leakage, OWASP Top 10)
-2. **Crashes and exceptions (zero tolerance)**: null pointer dereference, array/collection out-of-bounds access, forced type cast failure, division by zero, uncaught exceptions, unreleased resources (file handles/database connections/memory leaks), thread safety issues (race conditions/deadlocks), stack overflow, infinite recursion, any code that could cause program crash or throw unhandled exceptions
-3. Logic errors and boundary omissions (including conditionals, loops, concurrency)
+**Review requirements**: Skip auto-generated files (e.g., `package-lock.json`). **Before reviewing, extract the full list of changed files from each repo's diff, then review each file in alphabetical order. Within each file, process every `+` line change independently — no merging, no skipping. For each `+` line change, strictly scan the following 6 items in order. Each item must yield an explicit conclusion (found / not found) — none may be skipped**:
+1. Security vulnerabilities (injection, privilege escalation, sensitive data exposure, OWASP Top 10)
+2. **Crashes & exceptions (zero tolerance)**: null pointer dereferences, array/collection out-of-bounds, failed type casts, division by zero, uncaught exceptions, resource leaks (file handles/DB connections/memory leaks), thread-safety issues (race conditions/deadlocks), stack overflows, infinite recursion, any code that could cause a crash or unhandled exception
+3. Logic errors & boundary gaps (conditions, loops, concurrency)
 4. Performance issues (time complexity, redundant computation, memory leaks)
-5. Code standards and readability (naming, redundant logic, magic numbers)
-6. Refactoring opportunities (abstractable logic, duplicated code)
+5. Code standards & readability (naming, redundant logic, magic numbers)
+6. Refactoring opportunities (abstractable logic, duplicate code)
 
-**Classification Rules (strictly enforced, no subjective judgment)**:
-- 🚫 Critical Issues: Meets ANY of the following → (a) Can cause program crash/abnormal exit (including null pointer, out-of-bounds, uncaught exceptions, deadlocks, stack overflow, and all runtime crash risks) (b) Security vulnerability exists (c) Data loss or corruption (d) Build/compilation failure. Scan results from items 1 and 2 **ALWAYS** fall into this category and must NOT be downgraded to improvement suggestions.
-- ⚠️ Improvement Suggestions: Does not meet critical issue conditions, but is a problem found in scan items 3, 4, or 5.
-- 💡 Elegant Refactoring: Scan results from item 6, or structural optimizations to existing implementations.
+**Classification rules (enforce strictly, no subjective judgment)**:
+- 🚫 Critical Issue: meets any of the following → (a) can cause crash/abnormal exit (null pointer, out-of-bounds, uncaught exception, deadlock, stack overflow, or any runtime crash risk) (b) security vulnerability (c) data loss or corruption (d) build/compile failure. Results from items 1 and 2 **must** go here — never downgrade to suggestions.
+- ⚠️ Improvement Suggestion: does not meet Critical criteria, but issues found in items 3, 4, or 5.
+- 💡 Elegant Refactoring: results from item 6, or structural optimizations to existing implementations.
 
-**Ordering Rules**: Within the same category, sort by filename alphabetically; within the same file, sort by line number ascending. Each independent code location corresponds to one opinion — do not merge or split.
-**Only report issues explicitly present in the diff. Do not speculate or supplement content beyond the diff.**
-**Output Requirements (strictly enforced)**:
-Call the file write tool to generate the Code Review report in the root directory where the initial command was executed. The following rules must be strictly followed:
+**Ordering**: within the same category, sort by filename (alphabetical); within the same file, sort by line number ascending. One comment per distinct code location — no merging, no splitting.
+**Only report issues explicitly present in the diff — no speculation, no content beyond the diff.**
 
-1. **Single global file output**: All reviewed repositories MUST be consolidated into the same Markdown file. Splitting into multiple files is strictly prohibited.
-2. **File naming convention**: The filename must strictly follow `[current_root_directory_name]_code_review.md` (read the `ROOT_DIRECTORY_NAME` from the script output).
-3. **No-change filtering**: For repositories marked as `SKIP` by the script, skip the review phase entirely. Empty reports or placeholder messages in the body are strictly prohibited (only reflected in the final summary).
+**Output requirements (strict)**:
+Use the file-write tool to generate the Code Review report in the root directory where the command was initially executed. The following rules must be strictly observed:
 
-For the generated Markdown file, **strictly apply the following structure** for formatting. Do not modify the hierarchy or add unnecessary pleasantries:
+1. **Single global output file**: All reports for all changed repositories must be consolidated into a single Markdown file — splitting is never allowed.
+2. **File naming convention**: The filename must be strictly named `[current_root_dir_name]_code_review.md` (read `ROOT_DIRECTORY_NAME` from script output).
+3. **Filter unchanged repos**: For repositories marked `SKIP` by the script, skip the review stage entirely — do not output empty reports or placeholder text in the body (only include them in the final summary).
 
-# 📦 Repository Name: [read REPOSITORY name from log]
+For the generated Markdown file, **strictly apply the following structure**. Do not alter heading hierarchy or add irrelevant filler text:
 
-**Branch Comparison**: `[source branch O_BR]` -> `[current branch C_BR]`
+# 📦 Repository: [Read REPOSITORY name from log]
+
+**Branch comparison**: `[source branch O_BR]` -> `[current branch C_BR]`
 
 ## 📝 Change Overview
 
-[Concisely summarize the main code changes in this repository]
+[Concise summary of the main code changes in this repository]
 
-## 🚨 Deep Review Opinions
+## 🚨 Deep Review
 
-*(All three categories must be output. If none found for a category, write: `No issues of this type found in this change.` — do not omit the category heading.)*
+*(All three categories must be output. If none found in a category, write: `No issues of this type found in this change.` — the category heading must not be omitted.)*
 
-### 🚫 Critical Issues (Critical)
+### 🚫 Critical Issues
 
-*Only list issues meeting the critical issue classification criteria (crash/unhandled exception/security vulnerability/data corruption/build failure). **Any code that could cause runtime crash or throw unhandled exceptions MUST be listed here and must NOT be downgraded.** Anything not meeting these conditions goes into improvement suggestions.*
+*Only list issues that satisfy the Critical classification criteria (crash/unhandled exception/security vulnerability/data corruption/build failure). **Any code that could cause a runtime crash or unhandled exception must be listed here — no downgrading.** Issues that don't meet the criteria go into Improvement Suggestions.*
 
-* **Issue Description**: [Precisely describe the defect cause]
-* **Potential Impact**: [Describe consequences, e.g., memory overflow, data leakage]
+* **Issue description**: [Precise description of the defect]
+* **Potential impact**: [Describe consequences, e.g., memory overflow, data leak]
 
-* **Location**: Lines L[start_line] - L[end_line]
-* **Current branch vs source branch change comparison**:
+* **Location**: Line L[start] - L[end]
+* **Current vs origin branch diff**:
 
   ```javascript
-  // Source branch code
-  [Extract complete source branch code block]
+  // Origin branch code
+  [Extract full origin branch code block]
   
   // Current branch changed code
-  [Extract complete current branch changed code]
+  [Extract full current branch changed code]
   ```
 
-* **Fix Comparison**:
+* **Fix comparison**:
 
   ```javascript
   // ❌ Original code
-  [Extract complete original code block containing the issue]
+  [Extract full original problematic code block]
   
   // ✅ Fixed code
-  [Provide refactored code following Clean Code principles and high performance]
+  [Provide Clean Code, high-performance refactored code]
   ```
 
-* **Fix Highlights**: [Briefly describe the core advantage after fix, e.g., reduced cyclomatic complexity]
+* **Fix highlights**: [Briefly describe the core improvement, e.g., reduced cyclomatic complexity]
 
-### ⚠️ Improvement Suggestions (Standard)
+### ⚠️ Improvement Suggestions
 
-*List all issues that do not meet critical issue conditions but belong to logic errors/boundary omissions/performance issues/code standards. Sort by filename alphabetically, then by line number ascending.*
+*List all issues that don't meet Critical criteria but fall under logic errors/boundary gaps/performance issues/code standards. Sort by filename (alphabetical), then line number ascending.*
 
-* **Suggestion**: [Describe the suggestion, e.g., recommend using Optional Chaining]
+* **Suggestion**: [Describe the suggestion, e.g., use Optional Chaining]
 * **Rationale**: [Explain why this change is better]
 
-* **Location**: Lines L[start_line] - L[end_line]
-* **Current branch vs source branch change comparison**:
+* **Location**: Line L[start] - L[end]
+* **Current vs origin branch diff**:
 
   ```javascript
-  // Source branch code
-  [Extract complete source branch code block]
+  // Origin branch code
+  [Extract full origin branch code block]
   
   // Current branch changed code
-  [Extract complete current branch changed code]
+  [Extract full current branch changed code]
   ```
 
-* **Fix Comparison**:
+* **Fix comparison**:
 
   ```javascript
   // ❌ Original code
-  [Extract complete original code block containing the issue]
+  [Extract full original code block]
   
   // ✅ Fixed code
-  [Provide refactored code following Clean Code principles and high performance]
+  [Provide Clean Code, high-performance refactored code]
   ```
 
-* **Fix Highlights**: [Briefly describe the core advantage after fix, e.g., reduced cyclomatic complexity]
+* **Fix highlights**: [Briefly describe the core improvement]
 
-### 💡 Elegant Refactoring (Refactoring)
+### 💡 Elegant Refactoring
 
-*Must provide refactoring solutions based on context targeting specific code change points. Strictly follow the comparison format below:*
+*Must provide refactoring solutions based on context for specific code changes. Strictly follow the comparison format below:*
 
-* **Location**: Lines L[start_line] - L[end_line]
+* **Location**: Line L[start] - L[end]
 
-* **Current branch vs source branch change comparison**:
+* **Current vs origin branch diff**:
 
   ```javascript
-  // Source branch code
-  [Extract complete source branch code block]
+  // Origin branch code
+  [Extract full origin branch code block]
   
   // Current branch changed code
-  [Extract complete current branch changed code]
+  [Extract full current branch changed code]
   ```
 
-* **Fix Comparison**:
+* **Fix comparison**:
 
   ```javascript
   // ❌ Original code
-  [Extract complete original code block containing the issue]
+  [Extract full original code block]
   
   // ✅ Fixed code
-  [Provide refactored code following Clean Code principles and high performance]
+  [Provide Clean Code, high-performance refactored code]
   ```
 
-* **Fix Highlights**: [Briefly describe the core advantage after fix, e.g., reduced cyclomatic complexity]
+* **Fix highlights**: [Briefly describe the core improvement]
 
-## 🏁 Summary Review
+## 🏁 Summary
 
-* **Overall Rating**: [Calculate by formula: 10 - (critical_count × 3) - (suggestion_count × 0.5) - (refactoring_count × 0.2), minimum 1 point, one decimal place. Format: X.X points (Critical × N, Suggestions × N, Refactoring × N)]
-* **Core Risk**: [One sentence summarizing the most important change point to focus on]
+* **Overall rating**: [Calculate: 10 - (critical×3) - (suggestions×0.5) - (refactoring×0.2), minimum 1.0, one decimal place. Format: X.X pts (critical×N, suggestions×N, refactoring×N)]
+* **Core risk**: [One-sentence summary of the most important change to watch]
 
 ---
 
-*(Note: When multiple repositories have changes, use `---` as separator and repeat the template blocks above.)*
+*(Note: When there are multiple changed repositories, use `---` as separator and repeat the above template block.)*
 
 # 📊 Global Execution Summary
 
 *(Note: Must be placed at the very end of the document)*
 
-* **Total Scanned**: [read TOTAL_SCANNED_REPOS from log]
-* **Total Reviewed**: [number of repositories that produced Diff reports]
-* **Total Skipped**: [number of repositories without reports]
-* **Skip Details**:
-  * [RepoA name]: [extract specific reason from `SKIP` log parentheses]
-  * [RepoB name]: [extract specific reason from `SKIP` log parentheses]
+* **Total scanned**: [Read TOTAL_SCANNED_REPOS from log]
+* **Total reviewed**: [Number of repositories that produced a Diff report]
+* **Total skipped**: [Number of repositories that did not produce a report]
+* **Skip details**:
+  * [Repo A name]: [Extract specific reason from `SKIP` log entry]
+  * [Repo B name]: [Extract specific reason from `SKIP` log entry]
 
-## Constraints (Mandatory)
+## Constraints
 
-- Output language must match the user's language (e.g., if the user writes in Chinese, output in Chinese; if in English, output in English).
-- Extremely concise, reject filler and excessive pleasantries.
-- Must consolidate all repository reports into the same Markdown file. Splitting into multiple files is prohibited.
+- Output language must match the user's input language (e.g., Chinese input → Chinese output; English input → English output).
+- Extremely concise; reject verbosity and excessive pleasantries.
+- Must consolidate all repository reports into a single Markdown file; splitting into multiple files is not allowed.
