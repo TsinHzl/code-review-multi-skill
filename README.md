@@ -107,7 +107,7 @@ Repositories are automatically skipped in the following cases:
 
 ## Constraints
 
-- Output language: **Chinese** (mandatory)
+- Output language: **matches the user's language** (e.g., Chinese input → Chinese output; English input → English output)
 - Extremely concise, rejects nonsense and excessive pleasantries
 - Must consolidate all repository reports into the same Markdown file
 - No empty reports or placeholder prompts for unchanged repositories
@@ -239,7 +239,7 @@ claude
 
 ## 约束条件
 
-- 输出语言：**中文**（强制）
+- 输出语言：**匹配用户的语言**（用户使用中文则输出中文，使用英文则输出英文）
 - 极度精简，拒绝废话和过度客套
 - 必须将所有仓库报告整合到同一个 Markdown 文件
 - 无变更的仓库不输出空报告或占位提示
