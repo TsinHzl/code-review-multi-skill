@@ -37,6 +37,11 @@ Use the following keywords in Claude Code to trigger the skill:
 - `batch audit`
 - `all repositories`
 - `batch code inspection`
+- `批量审查`
+- `多仓库`
+- `批量审核`
+- `所有仓库`
+- `批量代码检查`
 
 ### Example
 
@@ -47,6 +52,7 @@ cd /path/to/parent-directory
 # Start Claude Code and request batch review
 claude
 > batch review all repositories
+> 请对所有仓库进行批量代码审查
 ```
 
 ### Workflow
@@ -58,7 +64,7 @@ claude
 
 ## Output Format
 
-Generated report file is named `[current_directory_name]_code_review.md`, containing:
+Generated report file is named `[current_directory_name]_code_review.md`. The report template is defined in `references/report-template.md` and contains:
 
 ### Per-Repository Review Content
 
@@ -81,7 +87,7 @@ Generated report file is named `[current_directory_name]_code_review.md`, contai
 Repositories are automatically skipped in the following cases:
 
 - Detached HEAD state
-- Source branch not found
+- Source branch not found and cannot match default main branch
 - Current branch matches source branch (no new commits)
 - Branches differ but no effective code changes
 
@@ -91,6 +97,7 @@ Repositories are automatically skipped in the following cases:
 
 - Uses `git reflog` to trace branch creation origin
 - Auto-handles `remotes/` and `origin/` prefixes
+- Fallback to default main branch (main/master/develop) when source branch cannot be determined
 - Compatible with regular repos, Submodules, and Worktrees
 
 ### Memory Optimization
@@ -104,13 +111,15 @@ Repositories are automatically skipped in the following cases:
 - Skips auto-generated files (e.g., `package-lock.json`)
 - Focuses on logic bugs, boundary gaps, readability, performance, security
 - Provides complete code comparison and fix solutions
+- Report structure follows the template defined in `references/report-template.md`
 
 ## Constraints
 
-- Output language: **matches the user's language** (e.g., Chinese input → Chinese output; English input → English output)
+- Output language: **forced Chinese output**
 - Extremely concise, rejects nonsense and excessive pleasantries
 - Must consolidate all repository reports into the same Markdown file
 - No empty reports or placeholder prompts for unchanged repositories
+- Each independent code location corresponds to a single review comment, no merging or splitting
 
 ## Dependencies
 
@@ -169,6 +178,11 @@ copy code-review-multi %USERPROFILE%\.claude\skills\
 - `批量审核`
 - `所有仓库`
 - `批量代码检查`
+- `batch review`
+- `multi-repo`
+- `batch audit`
+- `all repositories`
+- `batch code inspection`
 
 ### 示例
 
@@ -179,6 +193,7 @@ cd /path/to/parent-directory
 # 启动 Claude Code 并请求批量审查
 claude
 > 请对所有仓库进行批量代码审查
+> batch review all repositories
 ```
 
 ### 工作流程
@@ -190,7 +205,7 @@ claude
 
 ## 输出格式
 
-生成的报告文件命名为 `[当前目录名]_code_review.md`，包含：
+生成的报告文件命名为 `[当前目录名]_code_review.md`，报告模板详见 `references/report-template.md`，包含：
 
 ### 每个仓库的审查内容
 
@@ -213,8 +228,8 @@ claude
 以下情况仓库会被自动跳过：
 
 - Detached HEAD 状态
-- 未找到源分支
-- 当前分支与源分支相同（无新提交）
+- 未找到源分支且无法匹配默认主分支
+- 当前分支与源分支一致（无新提交）
 - 分支不同但无有效代码变更
 
 ## 技术细节
@@ -223,6 +238,7 @@ claude
 
 - 使用 `git reflog` 追溯分支创建来源
 - 自动处理 `remotes/` 和 `origin/` 前缀
+- 无法确定源分支时 fallback 到默认主分支（main/master/develop）
 - 兼容常规仓库、Submodules 和 Worktrees
 
 ### 内存优化
@@ -236,13 +252,15 @@ claude
 - 跳过自动生成文件（如 `package-lock.json`）
 - 关注逻辑缺陷、边界遗漏、可读性、性能、安全性
 - 提供完整的代码对比和修复方案
+- 报告结构遵循 `references/report-template.md` 定义的模板
 
 ## 约束条件
 
-- 输出语言：**匹配用户的语言**（用户使用中文则输出中文，使用英文则输出英文）
+- 输出语言：**强制中文输出**
 - 极度精简，拒绝废话和过度客套
 - 必须将所有仓库报告整合到同一个 Markdown 文件
 - 无变更的仓库不输出空报告或占位提示
+- 每个独立代码位置对应一条审查意见，不合并、不拆分
 
 ## 依赖
 

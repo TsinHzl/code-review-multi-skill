@@ -1,7 +1,7 @@
 #!/bin/bash
-# code-review-multi batch scan and Diff extraction script
-# Usage: bash code-review-multi-env.sh
-# Auto-scans all subdirectories containing .git under the current directory and outputs an aggregated Diff log
+# code-review-multi 批量扫描与 Diff 提取脚本
+# 用法: bash code-review-multi-env.sh
+# 自动扫描当前目录下所有含 .git 的子仓库，输出聚合 Diff 日志
 
 ROOT_DIR=$(pwd)
 ROOT_DIR_NAME=$(basename "$ROOT_DIR")
@@ -29,7 +29,7 @@ for d in */; do
     C_BR=$(git branch --show-current)
 
     if [ -z "$C_BR" ]; then
-        echo "========== SKIP: $REPO_NAME (Reason: Currently in Detached HEAD state, no active branch) ==========" >> "$ALL_DIFFS_TMP"
+        echo "========== SKIP: $REPO_NAME (原因：当前处于 Detached HEAD 游离状态，无明确分支) ==========" >> "$ALL_DIFFS_TMP"
         cd "$ROOT_DIR"
         continue
     fi
@@ -38,13 +38,29 @@ for d in */; do
     O_BR_COMPARE="${O_BR#remotes/}"
     O_BR_COMPARE="${O_BR_COMPARE#origin/}"
 
-    if [ -z "$O_BR" ]; then
-        echo "========== SKIP: $REPO_NAME (Reason: Source branch not found) ==========" >> "$ALL_DIFFS_TMP"
-        cd "$ROOT_DIR"
-        continue
+    # 处理 reflog 返回 HEAD 字面量或为空的情况，fallback 到默认主分支
+    if [ -z "$O_BR" ] || [ "$O_BR" == "HEAD" ] || [ "$C_BR" == "$O_BR_COMPARE" ]; then
+        DEFAULT_BR=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@')
+        if [ -z "$DEFAULT_BR" ]; then
+            for br in main master develop; do
+                if git rev-parse --verify "origin/$br" >/dev/null 2>&1; then
+                    DEFAULT_BR="$br"
+                    break
+                fi
+            done
+        fi
+        if [ -n "$DEFAULT_BR" ]; then
+            O_BR="origin/$DEFAULT_BR"
+            O_BR_COMPARE="$DEFAULT_BR"
+        else
+            echo "========== SKIP: $REPO_NAME (原因：未找到源分支且无法匹配默认主分支) ==========" >> "$ALL_DIFFS_TMP"
+            cd "$ROOT_DIR"
+            continue
+        fi
     fi
-    if [ "$C_BR" == "$O_BR" ] || [ "$C_BR" == "$O_BR_COMPARE" ]; then
-        echo "========== SKIP: $REPO_NAME (Reason: Current branch matches source branch, no new commits) ==========" >> "$ALL_DIFFS_TMP"
+
+    if [ "$C_BR" == "$O_BR_COMPARE" ]; then
+        echo "========== SKIP: $REPO_NAME (原因：当前分支与源分支一致，无新提交) ==========" >> "$ALL_DIFFS_TMP"
         cd "$ROOT_DIR"
         continue
     fi
@@ -56,7 +72,7 @@ for d in */; do
         cat "$REPO_DIFF_TMP" >> "$ALL_DIFFS_TMP"
         echo -e "\n\n" >> "$ALL_DIFFS_TMP"
     else
-        echo "========== SKIP: $REPO_NAME (Reason: Branches differ but no effective code changes) ==========" >> "$ALL_DIFFS_TMP"
+        echo "========== SKIP: $REPO_NAME (原因：分支不同但代码无有效改动) ==========" >> "$ALL_DIFFS_TMP"
     fi
 
     rm -f "$REPO_DIFF_TMP"
