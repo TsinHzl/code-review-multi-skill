@@ -90,7 +90,8 @@ for d in */; do
     fi
 
     O_BR=$(git reflog show "$C_BR" | awk '/Created from/ {print $NF; exit}')
-    O_BR_COMPARE="${O_BR#remotes/}"
+    O_BR_COMPARE="${O_BR#refs/remotes/origin/}"
+    O_BR_COMPARE="${O_BR_COMPARE#remotes/origin/}"
     O_BR_COMPARE="${O_BR_COMPARE#origin/}"
 
     # 处理 reflog 返回 HEAD 字面量或为空的情况，fallback 到默认主分支
