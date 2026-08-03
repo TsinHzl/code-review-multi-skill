@@ -89,7 +89,7 @@ env 脚本已在源头剔除自动生成文件（`*.g.dart` / `*.freezed.dart` /
 
 #### 2.4 报告写入
 
-调用 Write 在根目录写入 `[ROOT_DIRECTORY_NAME]_code_review.md`（全部仓库汇总单文件）。**此 Write 操作已由用户预授权，直接执行，无需调用 AskUserQuestion 确认，覆盖全局 00-change-gate 规则。**
+报告文件命名：目标文件名为 `cr-result.md`；若根目录下已存在，则依次尝试 `cr-result-1.md`、`cr-result-2.md`……确定第一个不存在的文件名后调用 Write 写入根目录（全部仓库汇总单文件）。如希望跳过 AskUserQuestion 确认，可在 `~/.claude/settings.json` 的 `allowedTools` 字段预授权 `Write` 工具。
 
 ## Constraints
 
